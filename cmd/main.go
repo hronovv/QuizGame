@@ -5,28 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
+	CSV "quizgame/internal/csv"
 )
-
-type Problem struct {
-	Question string
-	Answer   string
-}
 
 func exit(message string) {
 	fmt.Println(message)
 	os.Exit(1)
-}
-
-func ParseLines(lines [][]string) []Problem {
-	problems := make([]Problem, len(lines))
-	for i, line := range lines {
-		problems[i] = Problem{
-			Question: strings.TrimSpace(line[0]),
-			Answer:   strings.TrimSpace(line[1]),
-		}
-	}
-	return problems
 }
 
 func main() {
@@ -42,7 +26,7 @@ func main() {
 	if err != nil {
 		exit("Failed to parse the provided CSV file.")
 	}
-	problems := ParseLines(lines)
+	problems := CSV.ParseLines(lines)
 	var count int
 	for i, problem := range problems {
 		fmt.Printf("Problem #%d: %s = ", i+1, problem.Question)
