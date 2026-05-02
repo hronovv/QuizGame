@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	CSV "quizgame/internal/csv"
+	"time"
 )
 
 func exit(message string) {
@@ -15,6 +16,7 @@ func exit(message string) {
 
 func main() {
 	csvFilename := flag.String("csv", "problems/problems.csv", "a csv file in the format 'question,answer'")
+	timeLimit := flag.Int("limit", 30, "the time limit for the quiz(seconds)")
 	flag.Parse()
 	file, err := os.Open(*csvFilename)
 	if err != nil {
@@ -28,14 +30,25 @@ func main() {
 	}
 	problems := CSV.ParseLines(lines)
 	var count int
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
 	for i, problem := range problems {
 		fmt.Printf("Problem #%d: %s = ", i+1, problem.Question)
-		var ans string
-		fmt.Scanf("%s", &ans)
-		if ans != problem.Answer {
-			fmt.Printf("Correct answer is: %s\n", problem.Answer)
-		} else {
-			count++
+		ansCh := make(chan string)
+		go func() {
+			var ans string
+			fmt.Scanf("%s", &ans)
+			ansCh <- ans
+		}()
+		select {
+		case <-timer.C:
+			fmt.Printf("\nYou answered %d/%d questions correctly", count, len(problems))
+			return
+		case ans := <- ansCh:
+			if ans != problem.Answer {
+				fmt.Printf("Correct answer is: %s\n", problem.Answer)
+			} else {
+				count++
+			}
 		}
 	}
 	fmt.Printf("You answered %d/%d questions correctly", count, len(problems))
